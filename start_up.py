@@ -1,30 +1,33 @@
-from record.start_app import StartApp
-from record.record import AdbRecord
+import time
+
+from record.adb import AdbUtils
+from record.licence import Licence
 
 
-class SmartPerfSdk(StartApp, AdbRecord):
+class SmartPerfSdk(AdbUtils, Licence):
+    """
+    平台上需要获取 ak
+    """
 
-    def step1_start_app(self, package_name: str, activity_name: str):
+    def __init__(self, app_key, app_secret):
+        super().__init__(app_key, app_secret)
+
+    def initialize_check(self):
+        self.get_user_privilege()
+        self.oss = self.get_oss_licence()
+        self.vip = self.get_user_privilege()
+
+    def start_app_record_video(self, app_text: str, mp4_name: str):
         """
-        第一个步骤启动app
-        :param package_name:
-        :param activity_name:
+        启动并且启动录屏
+        这里需要调用权限接口
+        :param mp4_name:
+        :param app_text:
         :return:
         """
-        self.start_app(package_name, activity_name)
+        self.start_app(app_text, mp4_name)
 
-    def step2_record_vedio(self, vedio_file: str, out_path: str, size: str = "1200x540", rate: str = "2000000"):
-        """
-        第二个步骤启动录屏
-        :param vedio_file:
-        :param out_path:
-        :param size:
-        :param rate:
-        :return:
-        """
-        self.start_record(vedio_file, out_path, size, rate)
-
-    def step3_upload_oss(self, max_size: float or int, out_path: str):
+    def stop_upload_oss(self, bucket: str):
         """
         第三个步骤停止录屏和上传OSS
         upload_oss里面包含了 获取用户的Vip等级得到的信息
@@ -32,5 +35,16 @@ class SmartPerfSdk(StartApp, AdbRecord):
         :return:
         """
         self.stop_record()
-        self.save_video(max_size, out_path)
-        self.upload_oss()
+        self.save_video(self.vip.get("videoDuration"), self.video_path)
+        ok = self.temp_auth_upload_file(self.oss, bucket, self.video_path)
+        print(ok)
+
+    def return_test_result(self):
+        ...
+
+
+if __name__ == '__main__':
+    sdk = SmartPerfSdk("zTOPdfzM", "317696f41febc60ac51fb553301a2508")
+    sdk.start_app_record_video("飞书", "feishu.mp4")
+    time.sleep(20)
+    sdk.stop_upload_oss("exampleobject")
