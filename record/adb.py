@@ -1,4 +1,4 @@
-import platform
+
 import re
 import signal
 import subprocess
@@ -71,32 +71,26 @@ class AdbUtils(Config):
     queries = 0
     video_path = ""
 
-    def __init__(self, adb_path: Optional[str] = None):
+    def __init__(self):
         """
         Args:
         adb_path (str): 指定adb路径
         """
         self.device_id = self.get_device_id()
         print(self.device_id)
-        self.adb_path = adb_path or self.builtin_adb_path()
+        self.load_path()
         if self.check_adb_device():
             self.dump_file = join(pro_path_new(), "dump", self.xml_file)
             self.xml_root()
 
-    def builtin_adb_path(self):
+    def load_path(self):
         """
         使用adb地址
         Returns:
         adb executable path
         """
-        system = platform.system()
-        machine = platform.machine()
-        DEFAULT_ADB_PATH = {}
-        adb_path = DEFAULT_ADB_PATH.get(f'{system}-{machine}')
-        if not adb_path:
-            adb_path = DEFAULT_ADB_PATH.get(system)
-            print(adb_path)
-        return adb_path
+        os.environ['path'] += f'{join(pro_path_new(), "res")};'
+        print(os.environ['path'])
 
     def get_device_id(self):
         """
@@ -175,9 +169,7 @@ class AdbUtils(Config):
     def record(self, mp4_path: str):
         """
         进行录屏
-        @param mp4_path: 文件名称 格式默认为mp4
-        @param size: 分辨率(目前未使用)
-        @param rate: 比特率
+        @param mp4_path: 文件名称 格式默认为mp4 size: 分辨率(目前未使用) rate: 比特率
         """
         try:
             if mp4_path.endswith('.mp4'):
@@ -250,37 +242,17 @@ class AdbUtils(Config):
     def start_record(self, mp4_file: str):
         """
         开线程 开始录制
-        @param vedio_file: 文件名称 默认mp4
-        @param out_path: 设备生成路径
-        @param size: 分辨率   "1200x540"
-        @param rate: 比特率  "2000000"
+        size: 分辨率   "1200x540" rate: 比特率  "2000000"
+        :param mp4_file:
         """
-        self.process = Process(target=self.record, args=(mp4_file,))
-        self.process.daemon = True
-        self.process.start()
+        self.p = Process(target=self.record, args=(mp4_file,))
+        self.p.daemon = True
+        self.p.start()
 
     def stop_record(self):
         """关闭录制"""
         try:
             os.kill(0, signal.CTRL_C_EVENT)  # 对当前所有进程发送ctrl+c操作
-            self.process.join()
+            self.p.join()
         except KeyboardInterrupt:
             print("录制结束")
-
-    def save_video(self, max_size: float or int, out_path: str):
-        """
-        保存视频
-        max_size应该和vip等级有关
-        :return:
-        """
-        time.sleep(3)
-        fp_size = os.path.getsize(self.video_path) / 1024
-        print(fp_size)
-        if fp_size <= max_size:
-            compress = f"ffmpeg -i {self.video_path} -vcodec {self.lib_name} -crf 5 -y {out_path}"
-            result = os.system(compress)
-            if result != 0:
-                return result, "没有安装或者配置ffmpeg"
-            return result, "保存视频成功"
-        return None, "视频长度过长"
-
