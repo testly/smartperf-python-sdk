@@ -1,12 +1,8 @@
 
 ### readme 
-使用说明 start_up.py里面
-接口返回目前有问题 但是videoDuration不能是0，addend这个不用返回 
-{'addend': 50,
- 'frameInterval': 100,
- 'index': 1.0,
- 'level': 0,
- 'points': 0,
- 'priorityByLevel': 100,
- 'saveDataTime': 5,
- 'videoDuration': 0}
+**start_up.py**文件执行区域里面。  
+先输入app_key, app_secret  
+sdk = SmartPerfSdk("zTOPdfzM", "317696f41febc60ac51fb553301a2508")  
+插入手机，滑动到你要录制的app屏幕上方,比如飞书
+sdk.start_app_record_video("飞书", "feishu.mp4")
+录屏使用了scrcpy 被一起在初始化时load_path了
