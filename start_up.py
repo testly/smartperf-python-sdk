@@ -35,7 +35,6 @@ class SmartPerfSdk(AdbUtils, Licence):
         :return:
         """
         self.stop_record()
-        self.save_video(self.vip.get("videoDuration"), self.video_path)
         ok = self.temp_auth_upload_file(self.oss, bucket, self.video_path)
         print(ok)
 
