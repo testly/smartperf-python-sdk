@@ -1,3 +1,4 @@
+import os
 from pprint import pprint
 from requests import post
 import oss2
@@ -69,23 +70,22 @@ class Licence:
         临时授权上传文件
         :return:
         """
-        # 阿里云账号AccessKey拥有所有API的访问权限，风险很高。强烈建议您创建并使用RAM用户进行API访问或日常运维，请登录RAM控制台创建RAM用户。
         auth = oss2.Auth(oss_info.get("accessKeyId"), oss_info.get("accessKeySecret"))
         bucket = oss2.Bucket(auth, oss_info.get("endpoint"), bucket)
         # 填写Object完整路径，例如exampledir/exampleobject.txt。Object完整路径中不能包含Bucket名称。
-        object_name = 'exampledir/exampleobject.txt'
+        # TODO 这里传递的file_name和bucket
+        file_name = os.path.basename(dst_file)
         # 生成上传文件的签名URL，有效时间为60秒。
         # 生成签名URL时，OSS默认会对Object完整路径中的正斜线（/）进行转义，从而导致生成的签名URL无法直接使用。
-        # 设置slash_safe为True，OSS不会对Object完整路径中的正斜线（/）进行转义，此时生成的签名URL可以直接使用。
-        url = bucket.sign_url('PUT', object_name, 60, slash_safe=True)
+        url = bucket.sign_url('PUT', file_name, 60, slash_safe=True)
         print('签名url的地址为：', url)
         # 使用签名URL上传本地文件。
-        # 如果未指定本地路径只设置了本地文件名称（例如examplefile.txt），则默认从示例程序所属项目对应本地路径中上传文件。
         result = bucket.put_object_with_url_from_file(url, dst_file)
-        return result.status
+        if result:
+            return result.status
 
 
 if __name__ == '__main__':
     licence = Licence("zTOPdfzM", "317696f41febc60ac51fb553301a2508")
-    # pprint(licence.get_oss_licence())
+    pprint(licence.get_oss_licence())
     pprint(licence.get_user_privilege())
