@@ -9,10 +9,9 @@ class SmartPerfSdk(AdbUtils, Licence):
     平台上需要获取 ak
     """
 
-    def __init__(self, app_key, app_secret):
-        super().__init__(app_key, app_secret)
-
-    def initialize_check(self):
+    def initialize_check(self, app_key, app_secret):
+        self.app_key = app_key
+        self.app_secret = app_secret
         self.get_user_privilege()
         self.oss = self.get_oss_licence()
         self.vip = self.get_user_privilege()
@@ -35,15 +34,25 @@ class SmartPerfSdk(AdbUtils, Licence):
         :return:
         """
         self.stop_record()
+        # 获取mp4长度和vip获取下来的比较 python使用moviepy
+        video_duration = self.vip["videoDuration"]
         ok = self.temp_auth_upload_file(self.oss, bucket, self.video_path)
         print(ok)
 
-    def return_test_result(self):
-        ...
+    def create_task_callback_result(self):
+        """
+        创建任务和回调结果
+        1.创建任务
+        2.获取任务id，轮询等待。
+        3.查询任务 标记跳出循环，结束。
+        """
+        # vip等级获取的拆帧间隔
+        self.frame_interval = self.vip["frameInterval"]
 
 
 if __name__ == '__main__':
-    sdk = SmartPerfSdk("zTOPdfzM", "317696f41febc60ac51fb553301a2508")
+    sdk = SmartPerfSdk()
+    sdk.initialize_check("zTOPdfzM", "317696f41febc60ac51fb553301a2508")
     sdk.start_app_record_video("飞书", "feishu.mp4")
     time.sleep(20)
-    sdk.stop_upload_oss("exampleobject")
+    sdk.stop_upload_oss("feishu")
