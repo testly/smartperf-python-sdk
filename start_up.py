@@ -1,4 +1,5 @@
 import time
+from pprint import pprint
 
 from record.adb import AdbUtils
 from record.licence import Licence
@@ -26,7 +27,7 @@ class SmartPerfSdk(AdbUtils, Licence):
         """
         self.start_app(app_text, mp4_name)
 
-    def stop_upload_oss(self, bucket: str):
+    def stop_upload_oss(self):
         """
         第三个步骤停止录屏和上传OSS
         upload_oss里面包含了 获取用户的Vip等级得到的信息
@@ -36,10 +37,12 @@ class SmartPerfSdk(AdbUtils, Licence):
         self.stop_record()
         # 获取mp4长度和vip获取下来的比较 python使用moviepy
         video_duration = self.vip["videoDuration"]
-        ok = self.temp_auth_upload_file(self.oss, bucket, self.video_path)
+        # if self.get_record_duration() >= video_duration:
+        #     return "视频过长"
+        ok = self.temp_auth_upload_file(self.oss, self.video_path)
         print(ok)
 
-    def create_task_callback_result(self):
+    def create_task_callback_result(self, project_id, algorithm_id):
         """
         创建任务和回调结果
         1.创建任务
@@ -47,7 +50,11 @@ class SmartPerfSdk(AdbUtils, Licence):
         3.查询任务 标记跳出循环，结束。
         """
         # vip等级获取的拆帧间隔
-        self.frame_interval = self.vip["frameInterval"]
+        frame_interval = self.vip["frameInterval"]
+        task_id = self.create_sdk(project_id, frame_interval, algorithm_id, self.video_path)
+        if task_id:
+            data = self.query_report_detail(task_id)
+            pprint(data)
 
 
 if __name__ == '__main__':
@@ -55,4 +62,5 @@ if __name__ == '__main__':
     sdk.initialize_check("zTOPdfzM", "317696f41febc60ac51fb553301a2508")
     sdk.start_app_record_video("飞书", "feishu.mp4")
     time.sleep(20)
-    sdk.stop_upload_oss("feishu")
+    sdk.stop_upload_oss()
+    sdk.create_task_callback_result(27, 38)
