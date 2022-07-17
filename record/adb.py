@@ -1,4 +1,3 @@
-
 import re
 import signal
 import subprocess
@@ -8,7 +7,6 @@ from subprocess import Popen, PIPE
 from multiprocessing import Process
 from time import sleep
 import os
-from typing import Type, Optional, Tuple, Final
 from constants import *
 from functools import wraps
 from inspect import isfunction
@@ -18,8 +16,8 @@ from constants import Config
 
 
 class Retries:
-    def __init__(self, max_tries: int, delay: Optional[int] = 1,
-                 exceptions: Tuple[Type[Exception], ...] = (Exception,), hook=None):
+    def __init__(self, max_tries: int, delay: int = 1,
+                 exceptions: tuple = (Exception,), hook=None):
         """
         通过装饰器实现的"重试"函数
         Args:
@@ -67,7 +65,7 @@ def stream_kwargs() -> dict:
 
 
 class AdbUtils(Config):
-    SUBPROCESS_FLAG: Final[int] = stream_kwargs()['creation_flags']
+    SUBPROCESS_FLAG = stream_kwargs()['creation_flags']
     queries = 0
     video_path = ""
 
@@ -175,6 +173,8 @@ class AdbUtils(Config):
             if mp4_path.endswith('.mp4'):
                 print("开始录屏")
                 self.video_path = join(pro_path_new(), "res", mp4_path)
+                res_path = join(pro_path_new(), "res")
+                os.chdir(res_path)
                 subprocess.Popen(f"scrcpy -s {self.device_id} --no-display --record {self.video_path}", shell=True)
             else:
                 raise Exception(f"{mp4_path}上传的格式不是Mp4")
