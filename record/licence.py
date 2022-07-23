@@ -55,8 +55,8 @@ class Licence:
         if res.status_code == 200:
             result = res.json()
             if result["success"]:
-                data = result["data"]
-                if data:return data
+                task_id = result["data"]
+                if task_id: return task_id
 
     def query_task_id(self, task_id):
         """
@@ -71,8 +71,9 @@ class Licence:
         if res.status_code == 200:
             result = res.json()
             if result["success"]:
-                data = result["data"]
-                if data: return data
+                pprint(result)
+                task_status = result["data"]
+                if task_status: return task_status
 
     def query_report_detail(self, task_id):
         """
@@ -89,6 +90,27 @@ class Licence:
             if result["success"]:
                 data = result["data"]
                 if data: return data
+
+    def get_task_frame_list_report(self, task_id):
+        """
+        报告详情目标帧接口
+        """
+        body = {
+            "taskId": task_id,
+            "appKey": self.app_key,
+            "appSecret": self.app_secret,
+        }
+        res = post(f"{self.url}/getTaskFrameListReport", json=body)
+        if res.status_code == 200:
+            result = res.json()
+            if result["success"]:
+                result_data = result["data"]
+                print("get_task_frame_list_report:", result_data)
+                if result_data:
+                    data = []
+                    for r in result_data:
+                        data.append({r["frameName"]: r["frameIndex"]})
+                    return data
 
     def check_dict_size(self, data: dict):
         """
@@ -140,8 +162,35 @@ class Licence:
         if result:
             return result.status
 
+    def create_task_callback_result(self, dst_file: str, project_id: int, algorithm_id: int):
+        """
+        创建任务和回调结果
+        1.创建任务
+        2.获取任务id，轮询等待。
+        3.查询任务 标记跳出循环，结束。
+        """
+        result = self.get_user_privilege()
+        if result:
+            frame_interval = result["frameInterval"]
+            file_name = os.path.basename(dst_file)
+            task_id = self.create_sdk(project_id, frame_interval, algorithm_id, file_name)
+            print(f"平台创建任务id成功{task_id}")
+            if task_id:
+                state = False
+                while not state:
+                    for status in self.query_task_id(task_id):
+                        if status['taskState'] == 2:
+                            state = True
+                            print("报告状态完成")
+                detail = self.query_report_detail(task_id)
+                if detail["taskState"] == 2:
+                    result = self.get_task_frame_list_report(task_id)
+                    pprint(result)
+
 
 if __name__ == '__main__':
     licence = Licence("zTOPdfzM", "317696f41febc60ac51fb553301a2508")
-    pprint(licence.get_oss_licence())
-    pprint(licence.get_user_privilege())
+    debug = False
+    if debug: pprint(licence.get_oss_licence())
+    if debug: pprint(licence.get_user_privilege())
+    licence.create_task_callback_result(r"D:\smartperf-python-sdk-main\res\feishu.mp4", 27, 38)
