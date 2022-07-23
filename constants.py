@@ -1,4 +1,11 @@
+import six
+import sys
+
+if not six.PY3 or sys.version_info[1] < 6 or sys.version_info[1] > 10:
+    raise Exception("Python版本最低是支持3.6-3.9")
+
 from os.path import abspath, dirname, join
+
 
 __all__ = ("pro_path_new", "join")
 
