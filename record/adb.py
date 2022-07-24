@@ -252,7 +252,9 @@ class AdbUtils(Config):
     def stop_record(self):
         """关闭录制"""
         try:
-            os.kill(0, signal.CTRL_C_EVENT)  # 对当前所有进程发送ctrl+c操作
             self.p.join()
-        except KeyboardInterrupt:
-            print("录制结束")
+        except KeyboardInterrupt as e:
+            print(f"录制结束={e}")
+        finally:
+            self.p.close()
+
