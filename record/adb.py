@@ -1,9 +1,7 @@
 import re
-import signal
 import subprocess
 import sys
 import time
-from subprocess import Popen, PIPE
 from multiprocessing import Process
 from time import sleep
 import os
@@ -181,20 +179,6 @@ class AdbUtils(Config):
         except KeyboardInterrupt:
             pass
 
-    def get_record_duration(self):
-        """
-        獲取錄屏長度
-        """
-        suffix = os.path.splitext(self.video_path)[-1]
-        if suffix != '.mp4' and suffix != '.avi' and suffix != '.flv':
-            raise Exception('不支持格式')
-        ffprobe_cmd = f'ffprobe -i {self.video_path} -show_entries format=duration -v quiet -of csv="p=0"'
-        p = Popen(ffprobe_cmd, stdout=PIPE, stderr=PIPE, shell=True)
-        out, err = p.communicate()
-        print(f"subprocess 执行结果：out:{out} err:{err}")
-        duration_info = float(str(out, 'utf-8').strip())
-        return int(duration_info * 1000)
-
     def is_video(self, input_path: str) -> bool:
         """
         判断是视频
@@ -219,26 +203,6 @@ class AdbUtils(Config):
         if res_bytes:
             return res_bytes / 1024
 
-    def get_vip_info(self) -> dict:
-        ...
-
-    def limit_of_use(self):
-        """
-        使用限制
-        視頻時長和文件大小
-        """
-        duration = self.get_record_duration()
-        file_size = self.get_file_size()
-        if file_size < 5000 or duration <= 10:
-            # 上傳oss
-            return True
-
-    def upload_oss(self):
-        """
-        上傳oss文件
-        """
-        return self.limit_of_use()
-
     def start_record(self, mp4_file: str):
         """
         开线程 开始录制
@@ -256,5 +220,5 @@ class AdbUtils(Config):
         except KeyboardInterrupt as e:
             print(f"录制结束={e}")
         finally:
-            self.p.close()
+            self.p.terminate()
 

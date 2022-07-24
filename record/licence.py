@@ -2,7 +2,6 @@ import os
 import time
 from pprint import pprint
 from requests import post
-import oss2
 
 
 class Licence:
@@ -19,6 +18,7 @@ class Licence:
     def get_user_privilege(self):
         """
         获取使用权限
+        uploadMp4?ak=""&as=""
         :return:
         """
         path = "/getVipPrivilege"
@@ -143,24 +143,19 @@ class Licence:
             else:
                 raise Exception(f"接口返回数据{data}不全，需要检查{self.url + path}接口")
 
-    def temp_auth_upload_file(self, oss_info: dict, dst_file: str):
+    def upload_file(self, dst_file: str):
         """
         临时授权上传文件
         :return:
         """
-        auth = oss2.Auth(oss_info.get("accessKeyId"), oss_info.get("securityToken"))
-        bucket = oss2.Bucket(auth, oss_info.get("endpoint"), 'smart-perf')
-        # 填写Object完整路径
+        path = f"/uploadMp4?app_key={self.app_key}&app_secret={self.app_secret}"
         file_name = os.path.basename(dst_file)
-        object_name = f'long-temp/web/{file_name}'
-        # 生成上传文件的签名URL，有效时间为60秒。
-        # 生成签名URL时，OSS默认会对Object完整路径中的正斜线（/）进行转义，从而导致生成的签名URL无法直接使用。
-        url = bucket.sign_url('PUT', object_name, 60, slash_safe=True)
-        print('签名url的地址为：', url)
-        # 使用签名URL上传本地文件。
-        result = bucket.put_object_with_url_from_file(url, dst_file)
-        if result:
-            return result.status
+        file_data = {'file': (file_name, open(dst_file, 'rb'), 'mp4')}
+        # 用files
+        res = post(url=self.url + path, files=file_data)
+        if res.status_code == 200:
+            result = res.json()
+            print(result)
 
     def create_task_callback_result(self, dst_file: str, project_id: int, algorithm_id: int):
         """
@@ -174,8 +169,8 @@ class Licence:
             frame_interval = result["frameInterval"]
             file_name = os.path.basename(dst_file)
             task_id = self.create_sdk(project_id, frame_interval, algorithm_id, file_name)
-            print(f"平台创建任务id成功{task_id}")
             if task_id:
+                print(f"平台创建任务id成功{task_id}")
                 state = False
                 while not state:
                     for status in self.query_task_id(task_id):
@@ -186,6 +181,8 @@ class Licence:
                 if detail["taskState"] == 2:
                     result = self.get_task_frame_list_report(task_id)
                     pprint(result)
+            else:
+                print(f"平台创建任务id失败")
 
 
 if __name__ == '__main__':
