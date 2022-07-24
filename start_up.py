@@ -1,3 +1,4 @@
+from os.path import exists
 import time
 from record.adb import AdbUtils
 from record.licence import Licence
@@ -28,9 +29,11 @@ class SmartPerfSdk(AdbUtils, Licence):
         video_duration = self.vip["videoDuration"]
         time.sleep(video_duration)
         self.stop_record()
-        ok = self.temp_auth_upload_file(self.oss, self.video_path)
-        print(ok)
-        self.create_task_callback_result(self.video_path, project_id, algorithm_id)
+        if exists(self.video_path):
+            ok = self.temp_auth_upload_file(self.oss, self.video_path)
+            print(ok)
+            if ok:
+                self.create_task_callback_result(self.video_path, project_id, algorithm_id)
 
 
 if __name__ == '__main__':
