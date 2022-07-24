@@ -30,7 +30,7 @@ class SmartPerfSdk(AdbUtils, Licence):
         time.sleep(video_duration)
         self.stop_record()
         if exists(self.video_path):
-            ok = self.temp_auth_upload_file(self.oss, self.video_path)
+            ok = self.upload_file(self.video_path)
             print(ok)
             if ok:
                 self.create_task_callback_result(self.video_path, project_id, algorithm_id)
